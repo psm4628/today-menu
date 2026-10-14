@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { fetchRecommendation, fetchRestaurants } from "../api/restaurants.js";
 import RestaurantCard from "../components/RestaurantCard.jsx";
+import VisitForm from "../components/VisitForm.jsx";
 import Roulette from "../components/Roulette.jsx";
 import useTags from "../hooks/useTags.js";
 import { pickSlots } from "../utils/roulette.js";
@@ -26,6 +27,7 @@ export default function Home({ onGoToList }) {
   const [loading, setLoading] = useState(false); // 서버에서 당첨 식당과 후보를 받는 중
   const [spin, setSpin] = useState(null); // { key, slots, winner, winnerIndex } 룰렛 한 판
   const [spinning, setSpinning] = useState(false);
+  const [visiting, setVisiting] = useState(false); // 결과 카드의 "가봤어요" 입력 창
   const seq = useRef(0); // 조건을 바꾸거나 새로 뽑으면 지난 판의 늦은 응답·타이머를 무시한다
   const { tags, error: tagsError } = useTags();
 
@@ -33,6 +35,7 @@ export default function Home({ onGoToList }) {
   const update = (key, value) => {
     seq.current += 1;
     setConditions({ ...conditions, [key]: value });
+    setVisiting(false);
     setResult(null);
     setSpin(null);
     setSpinning(false);
@@ -146,8 +149,27 @@ export default function Home({ onGoToList }) {
 
       {result && (
         <ul className="cards">
-          <RestaurantCard restaurant={result} />
+          <RestaurantCard restaurant={result}>
+            <button onClick={() => setVisiting(true)} disabled={busy}>가봤어요</button>
+          </RestaurantCard>
         </ul>
+      )}
+
+      {visiting && result && (
+        <VisitForm
+          restaurant={result}
+          onSaved={() => {
+            setVisiting(false);
+            setResult({ ...result, status: "VISITED" }); // 서버가 상태를 "가봄"으로 바꿨으므로 카드에 반영
+          }}
+          onCancel={() => setVisiting(false)}
+          onGone={() => {
+            setVisiting(false);
+            setResult(null);
+            setErrorMsg("이미 삭제된 식당입니다");
+            setProblem("error");
+          }}
+        />
       )}
 
       {spin && (

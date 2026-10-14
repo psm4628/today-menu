@@ -110,3 +110,17 @@ export function setFavorite(id, isFavorite) {
     body: JSON.stringify({ is_favorite: isFavorite }),
   });
 }
+
+// 방문 기록 추가. 성공하면 서버가 그 식당의 status 를 VISITED 로 바꾼다.
+export function createVisit(id, data) {
+  return request(`/api/restaurants/${id}/visits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+// 방문 기록 목록 (최근 방문일 순)
+export function fetchVisits(id) {
+  return request(`/api/restaurants/${id}/visits`);
+}

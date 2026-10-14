@@ -4,6 +4,8 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import RestaurantCard from "../components/RestaurantCard.jsx";
 import RestaurantForm from "../components/RestaurantForm.jsx";
+import VisitForm from "../components/VisitForm.jsx";
+import VisitHistory from "../components/VisitHistory.jsx";
 import useTags from "../hooks/useTags.js";
 
 const GONE_MSG = "이미 삭제된 식당입니다";
@@ -24,6 +26,8 @@ export default function RestaurantList() {
   const [deleteError, setDeleteError] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [favoriteBusyId, setFavoriteBusyId] = useState(null); // 즐겨찾기 요청 중인 식당
+  const [visiting, setVisiting] = useState(null); // "가봤어요" 입력 중인 식당
+  const [historyOf, setHistoryOf] = useState(null); // 방문 기록을 보는 식당
 
   // 서버에 보내는 현재 조건 (검색어는 입력이 멈춘 값)
   const applied = { ...filters, q: searchQ };
@@ -74,6 +78,8 @@ export default function RestaurantList() {
   function handleGone() {
     setEditing(null);
     setDeleting(null);
+    setVisiting(null);
+    setHistoryOf(null);
     setMessage(GONE_MSG);
     load();
   }
@@ -166,6 +172,8 @@ export default function RestaurantList() {
               >
                 {r.is_favorite ? "★" : "☆"}
               </button>
+              <button onClick={() => { setMessage(""); setVisiting(r); }}>가봤어요</button>
+              <button onClick={() => { setMessage(""); setHistoryOf(r); }}>방문 기록</button>
               <button onClick={() => { setMessage(""); setEditing(r); }}>수정</button>
               <button className="danger-outline" onClick={() => askDelete(r)}>삭제</button>
             </RestaurantCard>
@@ -197,6 +205,23 @@ export default function RestaurantList() {
           onCancel={() => setEditing(null)}
           onGone={handleGone}
         />
+      )}
+
+      {visiting && (
+        <VisitForm
+          restaurant={visiting}
+          onSaved={() => {
+            setVisiting(null);
+            setMessage("");
+            load(); // 상태가 "가봄"으로 바뀐 것을 현재 조건 그대로 다시 받아 온다
+          }}
+          onCancel={() => setVisiting(null)}
+          onGone={handleGone}
+        />
+      )}
+
+      {historyOf && (
+        <VisitHistory restaurant={historyOf} onClose={() => setHistoryOf(null)} onGone={handleGone} />
       )}
 
       {deleting && (

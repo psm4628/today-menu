@@ -58,3 +58,18 @@ button.danger-outline { border-color: #c92a2a; color: #c92a2a; }
 .card-actions .fav-button { font-size: 1.1rem; line-height: 1; padding: 4px 10px; color: #f08c00; }
 .favorite-only { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 12px; font-size: 0.9rem; }
 .favorite-only input { width: auto; margin: 0; }
+.card-actions { flex-wrap: wrap; }
+.badge.status { background: #eee; color: #555; }
+.badge.status.visited { background: #d3f9d8; color: #2b8a3e; }
+.dialog-sub { margin: -6px 0 12px; color: #555; overflow-wrap: anywhere; }
+.rating-field { margin: 0 0 12px; padding: 0; border: none; font-size: 0.9rem; }
+.rating-field legend { padding: 0; margin-bottom: 4px; }
+.rating-choices { display: flex; gap: 8px; }
+.dialog .rating-choice { display: inline-flex; align-items: center; gap: 4px; margin: 0; padding: 6px 10px; border: 1px solid #bbb; border-radius: 6px; cursor: pointer; }
+.dialog .rating-choice input { display: inline; width: auto; margin: 0; }
+.char-count { display: block; text-align: right; font-size: 0.8rem; color: #777; }
+.visit-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; max-height: 50vh; overflow-y: auto; }
+.visit-list li { padding: 8px 10px; border: 1px solid #e2e2dc; border-radius: 6px; }
+.visit-head { display: flex; justify-content: space-between; gap: 8px; }
+.visit-stars { color: #f08c00; }
+.visit-comment { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
