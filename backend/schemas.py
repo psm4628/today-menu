@@ -1,7 +1,8 @@
-from datetime import datetime
+import re
+from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, StrictBool, field_validator
+from pydantic import BaseModel, Field, StrictBool, StrictInt, field_validator
 
 
 class RestaurantCreate(BaseModel):
@@ -67,3 +68,45 @@ class RestaurantOut(BaseModel):
     owner_id: int
     created_at: Optional[datetime] = None
     tags: list[TagOut] = []
+
+
+class VisitCreate(BaseModel):
+    visited_at: date
+    rating: StrictInt = Field(ge=1, le=5)  # 정수만 (문자열 "3", 3.5, true 는 422)
+    comment: Optional[str] = None
+
+    @field_validator("visited_at", mode="before")
+    @classmethod
+    def date_format(cls, v):
+        # YYYY-MM-DD 문자열만 받는다 (숫자·다른 형식은 거절)
+        if not isinstance(v, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", v):
+            raise ValueError("방문일은 YYYY-MM-DD 형식으로 입력해 주세요")
+        try:
+            return date.fromisoformat(v)
+        except ValueError:
+            raise ValueError("올바른 날짜를 입력해 주세요")
+
+    @field_validator("visited_at")
+    @classmethod
+    def not_future(cls, v: date) -> date:
+        if v > date.today():  # 서버 기준 오늘
+            raise ValueError("미래 날짜는 입력할 수 없습니다")
+        return v
+
+    @field_validator("comment")
+    @classmethod
+    def clean_comment(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip()
+        if len(v) > 300:
+            raise ValueError("후기는 300자 이하로 입력해 주세요")
+        return v or None
+
+
+class VisitOut(BaseModel):
+    id: int
+    restaurant_id: int
+    visited_at: date
+    rating: int
+    comment: Optional[str] = None
