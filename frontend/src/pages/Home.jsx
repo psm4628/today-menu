@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { fetchRecommendation, fetchRestaurants } from "../api/restaurants.js";
 import RestaurantCard from "../components/RestaurantCard.jsx";
+import Roulette from "../components/Roulette.jsx";
 import useTags from "../hooks/useTags.js";
+import { pickSlots } from "../utils/roulette.js";
 
 const CATEGORIES = ["한식", "중식", "일식", "양식", "분식", "카페", "기타"];
 const PRICES = [
@@ -21,29 +23,53 @@ export default function Home({ onGoToList }) {
   // null | "nomatch"(조건에 맞는 식당 없음) | "empty"(등록된 식당 없음) | "error"
   const [problem, setProblem] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // 서버에서 당첨 식당과 후보를 받는 중
+  const [spin, setSpin] = useState(null); // { key, slots, winner, winnerIndex } 룰렛 한 판
+  const [spinning, setSpinning] = useState(false);
+  const seq = useRef(0); // 조건을 바꾸거나 새로 뽑으면 지난 판의 늦은 응답·타이머를 무시한다
   const { tags, error: tagsError } = useTags();
 
-  // 조건을 바꾸면 직전 결과와 제외 정보(result.id)를 함께 지운다.
+  // 조건을 바꾸면 룰렛과 직전 결과, 제외 정보(result.id)를 함께 지운다.
   const change = (key) => (e) => {
+    seq.current += 1;
     setConditions({ ...conditions, [key]: e.target.value });
     setResult(null);
+    setSpin(null);
+    setSpinning(false);
+    setLoading(false);
     setProblem(null);
   };
 
   async function pick(excludeId) {
+    const mySeq = ++seq.current;
     setLoading(true);
     setProblem(null);
+    setResult(null); // 룰렛이 멈추기 전에는 결과 카드를 보여주지 않는다
     try {
-      setResult(await fetchRecommendation(conditions, excludeId));
+      // 1) 당첨 식당은 서버(/api/recommend)가 정한다.
+      const winner = await fetchRecommendation(conditions, excludeId);
+      // 2) 같은 조건의 후보 목록은 룰렛 칸을 채우는 용도일 뿐이다. 못 받으면 당첨 식당 한 칸만 쓴다.
+      let candidates = [];
+      try {
+        candidates = await fetchRestaurants(conditions);
+      } catch {
+        candidates = [];
+      }
+      if (mySeq !== seq.current) return;
+      const slots = pickSlots(candidates, winner);
+      setSpin({ key: mySeq, slots, winner, winnerIndex: slots.findIndex((r) => r.id === winner.id) });
+      setSpinning(true);
     } catch (err) {
-      setResult(null);
+      if (mySeq !== seq.current) return;
+      setSpin(null);
       if (err.kind === "notfound") {
         // 조건 때문인지, 식당이 하나도 없어서인지 구분한다.
         try {
           const all = await fetchRestaurants();
+          if (mySeq !== seq.current) return;
           setProblem(all.length === 0 ? "empty" : "nomatch");
         } catch (err2) {
+          if (mySeq !== seq.current) return;
           setErrorMsg(err2.message);
           setProblem("error");
         }
@@ -52,9 +78,18 @@ export default function Home({ onGoToList }) {
         setProblem("error");
       }
     } finally {
-      setLoading(false);
+      if (mySeq === seq.current) setLoading(false);
     }
   }
+
+  // 룰렛이 멈춘 뒤에 결과 카드를 보여준다.
+  function handleSpinDone() {
+    if (spin.key !== seq.current) return;
+    setSpinning(false);
+    setResult(spin.winner);
+  }
+
+  const busy = loading || spinning;
 
   const select = (key, label, options) => (
     <label>
@@ -81,8 +116,8 @@ export default function Home({ onGoToList }) {
         {select("tag_id", "태그", tags.map((t) => ({ value: String(t.id), label: t.name })))}
       </div>
       {tagsError && <p className="tag-error">{tagsError}</p>}
-      <button className="primary pick" onClick={() => pick(null)} disabled={loading}>
-        {loading && !result ? "뽑는 중…" : "뽑기"}
+      <button className="primary pick" onClick={() => pick(null)} disabled={busy}>
+        {busy ? "뽑는 중…" : "뽑기"}
       </button>
 
       {problem === "nomatch" && <div className="notice">{NO_MATCH_MSG}</div>}
@@ -96,13 +131,18 @@ export default function Home({ onGoToList }) {
 
       {problem === "error" && <div className="notice error" role="alert">{errorMsg}</div>}
 
+      {spin && (
+        <Roulette slots={spin.slots} winnerIndex={spin.winnerIndex} spinKey={spin.key} onDone={handleSpinDone} />
+      )}
+
       {result && (
-        <>
-          <ul className="cards">
-            <RestaurantCard restaurant={result} />
-          </ul>
-          <button onClick={() => pick(result.id)} disabled={loading}>다시 뽑기</button>
-        </>
+        <ul className="cards">
+          <RestaurantCard restaurant={result} />
+        </ul>
+      )}
+
+      {spin && (
+        <button onClick={() => pick(result.id)} disabled={busy || !result}>다시 뽑기</button>
       )}
     </section>
   );
