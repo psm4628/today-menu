@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ApiError, deleteRestaurant, fetchRestaurants } from "../api/restaurants.js";
+import { ApiError, deleteRestaurant, fetchRestaurants, setFavorite } from "../api/restaurants.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import RestaurantCard from "../components/RestaurantCard.jsx";
@@ -7,7 +7,7 @@ import RestaurantForm from "../components/RestaurantForm.jsx";
 import useTags from "../hooks/useTags.js";
 
 const GONE_MSG = "이미 삭제된 식당입니다";
-const NO_FILTER = { q: "", category: "", price_range: "", status: "", tag_id: "" };
+const NO_FILTER = { q: "", category: "", price_range: "", status: "", tag_id: "", favorite: "" };
 const SEARCH_DELAY_MS = 400;
 
 export default function RestaurantList() {
@@ -23,6 +23,7 @@ export default function RestaurantList() {
   const [deleting, setDeleting] = useState(null); // 삭제 확인 중인 식당
   const [deleteError, setDeleteError] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [favoriteBusyId, setFavoriteBusyId] = useState(null); // 즐겨찾기 요청 중인 식당
 
   // 서버에 보내는 현재 조건 (검색어는 입력이 멈춘 값)
   const applied = { ...filters, q: searchQ };
@@ -50,7 +51,7 @@ export default function RestaurantList() {
   // 선택을 바꾸면 바로, 검색어는 위 지연이 끝나면 요청한다.
   useEffect(() => {
     load();
-  }, [searchQ, filters.category, filters.price_range, filters.status, filters.tag_id]);
+  }, [searchQ, filters.category, filters.price_range, filters.status, filters.tag_id, filters.favorite]);
 
   function clearFilters() {
     setFilters(NO_FILTER);
@@ -90,6 +91,25 @@ export default function RestaurantList() {
       else setDeleteError(err.message);
     } finally {
       setDeleteBusy(false);
+    }
+  }
+
+  // 즐겨찾기를 바꾸면 카드를 바로 바꾼다. "즐겨찾기만 보기" 중에 해제하면 목록에서 뺀다.
+  async function toggleFavorite(restaurant) {
+    setFavoriteBusyId(restaurant.id);
+    setMessage("");
+    try {
+      const saved = await setFavorite(restaurant.id, !restaurant.is_favorite);
+      setRestaurants((prev) =>
+        prev
+          .map((r) => (r.id === saved.id ? saved : r))
+          .filter((r) => filters.favorite !== "true" || r.is_favorite),
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.kind === "notfound") handleGone();
+      else setMessage(err.message);
+    } finally {
+      setFavoriteBusyId(null);
     }
   }
 
@@ -136,6 +156,16 @@ export default function RestaurantList() {
         <ul className="cards">
           {restaurants.map((r) => (
             <RestaurantCard key={r.id} restaurant={r}>
+              <button
+                className="fav-button"
+                onClick={() => toggleFavorite(r)}
+                disabled={favoriteBusyId === r.id}
+                aria-pressed={r.is_favorite}
+                aria-label={r.is_favorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+                title={r.is_favorite ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+              >
+                {r.is_favorite ? "★" : "☆"}
+              </button>
               <button onClick={() => { setMessage(""); setEditing(r); }}>수정</button>
               <button className="danger-outline" onClick={() => askDelete(r)}>삭제</button>
             </RestaurantCard>

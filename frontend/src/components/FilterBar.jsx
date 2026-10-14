@@ -40,6 +40,14 @@ export default function FilterBar({ filters, onChange, tags, tagsError }) {
         {select("tag_id", "태그", tags.map((t) => ({ value: String(t.id), label: t.name })))}
       </div>
       {tagsError && <p className="tag-error">{tagsError}</p>}
+      <label className="favorite-only">
+        <input
+          type="checkbox"
+          checked={filters.favorite === "true"}
+          onChange={(e) => onChange({ ...filters, favorite: e.target.checked ? "true" : "" })}
+        />
+        즐겨찾기만 보기
+      </label>
     </div>
   );
 }

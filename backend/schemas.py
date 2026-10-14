@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, StrictBool, field_validator
 
 
 class RestaurantCreate(BaseModel):
@@ -49,6 +49,10 @@ class TagOut(BaseModel):
 
 class RestaurantTagsIn(BaseModel):
     tag_ids: list[int]
+
+
+class FavoriteIn(BaseModel):
+    is_favorite: StrictBool  # true/false 만 받는다 ("true", 1 등은 422)
 
 
 class RestaurantOut(BaseModel):

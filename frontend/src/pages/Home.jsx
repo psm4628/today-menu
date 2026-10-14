@@ -18,7 +18,7 @@ const STATUSES = [
 const NO_MATCH_MSG = "조건에 맞는 식당이 없습니다. 조건을 바꿔 보세요";
 
 export default function Home({ onGoToList }) {
-  const [conditions, setConditions] = useState({ category: "", price_range: "", status: "", tag_id: "" });
+  const [conditions, setConditions] = useState({ category: "", price_range: "", status: "", tag_id: "", favorite: "" });
   const [result, setResult] = useState(null);
   // null | "nomatch"(조건에 맞는 식당 없음) | "empty"(등록된 식당 없음) | "error"
   const [problem, setProblem] = useState(null);
@@ -30,15 +30,16 @@ export default function Home({ onGoToList }) {
   const { tags, error: tagsError } = useTags();
 
   // 조건을 바꾸면 룰렛과 직전 결과, 제외 정보(result.id)를 함께 지운다.
-  const change = (key) => (e) => {
+  const update = (key, value) => {
     seq.current += 1;
-    setConditions({ ...conditions, [key]: e.target.value });
+    setConditions({ ...conditions, [key]: value });
     setResult(null);
     setSpin(null);
     setSpinning(false);
     setLoading(false);
     setProblem(null);
   };
+  const change = (key) => (e) => update(key, e.target.value);
 
   async function pick(excludeId) {
     const mySeq = ++seq.current;
@@ -116,6 +117,14 @@ export default function Home({ onGoToList }) {
         {select("tag_id", "태그", tags.map((t) => ({ value: String(t.id), label: t.name })))}
       </div>
       {tagsError && <p className="tag-error">{tagsError}</p>}
+      <label className="favorite-only">
+        <input
+          type="checkbox"
+          checked={conditions.favorite === "true"}
+          onChange={(e) => update("favorite", e.target.checked ? "true" : "")}
+        />
+        즐겨찾기만 보기
+      </label>
       <button className="primary pick" onClick={() => pick(null)} disabled={busy}>
         {busy ? "뽑는 중…" : "뽑기"}
       </button>

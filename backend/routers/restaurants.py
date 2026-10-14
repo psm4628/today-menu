@@ -5,7 +5,7 @@ from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
-from backend.schemas import RestaurantCreate, RestaurantOut, RestaurantTagsIn
+from backend.schemas import FavoriteIn, RestaurantCreate, RestaurantOut, RestaurantTagsIn
 from backend.services.tags import attach_tags
 
 router = APIRouter(prefix="/api/restaurants", tags=["restaurants"])
@@ -30,6 +30,7 @@ def list_restaurants(
     status: Optional[Literal["WANT", "VISITED"]] = None,
     q: Optional[str] = Query(default=None, max_length=100),
     tag_id: Optional[int] = None,
+    favorite: Optional[bool] = None,
     db: Session = Depends(get_db),
 ):
     conditions = []
@@ -52,6 +53,8 @@ def list_restaurants(
     if tag_id is not None:
         conditions.append("id IN (SELECT restaurant_id FROM restaurant_tags WHERE tag_id = :tag_id)")
         params["tag_id"] = tag_id
+    if favorite:  # true 일 때만 거른다. 안 주거나 false 면 전체
+        conditions.append("is_favorite = TRUE")
 
     where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
     rows = db.execute(text(f"SELECT {COLUMNS} FROM restaurants{where} ORDER BY id DESC"), params).mappings().all()
@@ -117,5 +120,16 @@ def replace_restaurant_tags(restaurant_id: int, body: RestaurantTagsIn, db: Sess
             text("INSERT INTO restaurant_tags (restaurant_id, tag_id) VALUES (:rid, :tid)"),
             {"rid": restaurant_id, "tid": tag_id},
         )
+    db.commit()
+    return _get_or_404(db, restaurant_id)
+
+
+@router.put("/{restaurant_id}/favorite", response_model=RestaurantOut)
+def set_favorite(restaurant_id: int, body: FavoriteIn, db: Session = Depends(get_db)):
+    _get_or_404(db, restaurant_id)
+    db.execute(
+        text("UPDATE restaurants SET is_favorite = :fav WHERE id = :id"),
+        {"fav": body.is_favorite, "id": restaurant_id},
+    )
     db.commit()
     return _get_or_404(db, restaurant_id)

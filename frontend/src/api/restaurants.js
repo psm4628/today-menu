@@ -39,7 +39,7 @@ async function request(path, options) {
   throw new ApiError("server", SERVER_MSG);
 }
 
-// 조건: { q, category, price_range, status, tag_id } (빈 값은 보내지 않는다). 거르는 일은 서버가 한다.
+// 조건: { q, category, price_range, status, tag_id, favorite } (빈 값은 보내지 않는다. favorite 는 "true" 일 때만). 거르는 일은 서버가 한다.
 export function fetchRestaurants(conditions = {}) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(conditions)) {
@@ -99,5 +99,14 @@ export function setRestaurantTags(id, tagIds) {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tag_ids: tagIds }),
+  });
+}
+
+// 즐겨찾기만 바꾼다. 갱신된 식당을 돌려준다.
+export function setFavorite(id, isFavorite) {
+  return request(`/api/restaurants/${id}/favorite`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ is_favorite: isFavorite }),
   });
 }

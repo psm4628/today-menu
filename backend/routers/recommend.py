@@ -19,6 +19,7 @@ def recommend(
     price_range: Optional[int] = Query(default=None, ge=1, le=3),
     status: Optional[Literal["WANT", "VISITED"]] = None,
     tag_id: Optional[int] = None,
+    favorite: Optional[bool] = None,
     exclude_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
@@ -36,6 +37,8 @@ def recommend(
     if tag_id is not None:
         conditions.append("id IN (SELECT restaurant_id FROM restaurant_tags WHERE tag_id = :tag_id)")
         params["tag_id"] = tag_id
+    if favorite:  # true 일 때만 거른다
+        conditions.append("is_favorite = TRUE")
 
     def pick(extra: list[str], extra_params: dict):
         where = f" WHERE {' AND '.join(conditions + extra)}" if conditions or extra else ""
