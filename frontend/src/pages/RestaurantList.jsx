@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, deleteRestaurant, fetchRestaurants } from "../api/restaurants.js";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import FilterBar from "../components/FilterBar.jsx";
 import RestaurantCard from "../components/RestaurantCard.jsx";
 import RestaurantForm from "../components/RestaurantForm.jsx";
 
 const GONE_MSG = "이미 삭제된 식당입니다";
+const NO_FILTER = { q: "", category: "", price_range: "", status: "" };
+const SEARCH_DELAY_MS = 400;
 
 export default function RestaurantList() {
   const [restaurants, setRestaurants] = useState(null); // null = 불러오는 중
+  const [filters, setFilters] = useState(NO_FILTER); // 화면에 보이는 입력값
+  const [searchQ, setSearchQ] = useState(""); // 입력이 멈춘 뒤 서버에 보내는 검색어
+  const requestSeq = useRef(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState(""); // 목록 위 안내 (예: 이미 삭제된 식당)
   const [formOpen, setFormOpen] = useState(false);
@@ -16,29 +22,49 @@ export default function RestaurantList() {
   const [deleteError, setDeleteError] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
 
+  // 서버에 보내는 현재 조건 (검색어는 입력이 멈춘 값)
+  const applied = { ...filters, q: searchQ };
+  const hasFilter = Object.values(applied).some((v) => v.trim() !== "");
+
   async function load() {
+    const seq = ++requestSeq.current;
     setError("");
     try {
-      setRestaurants(await fetchRestaurants());
+      const data = await fetchRestaurants(applied);
+      if (seq === requestSeq.current) setRestaurants(data); // 늦게 도착한 옛 응답은 버린다
     } catch (err) {
+      if (seq !== requestSeq.current) return;
       setRestaurants(null);
       setError(err.message);
     }
   }
 
+  // 검색어는 입력이 멈춘 뒤 0.4초 후에 반영한다.
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchQ(filters.q), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [filters.q]);
+
+  // 선택을 바꾸면 바로, 검색어는 위 지연이 끝나면 요청한다.
   useEffect(() => {
     load();
-  }, []);
+  }, [searchQ, filters.category, filters.price_range, filters.status]);
 
-  function handleCreated(saved) {
-    setRestaurants((prev) => [saved, ...(prev ?? [])]);
-    setFormOpen(false);
+  function clearFilters() {
+    setFilters(NO_FILTER);
+    setSearchQ("");
   }
 
-  function handleUpdated(saved) {
-    setRestaurants((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+  // 추가·수정·삭제 뒤에는 현재 조건 그대로 서버에서 다시 받아 온다.
+  function handleCreated() {
+    setFormOpen(false);
+    load();
+  }
+
+  function handleUpdated() {
     setEditing(null);
     setMessage("");
+    load();
   }
 
   // 수정·삭제 중 이미 삭제된 식당(404)임을 알게 된 경우
@@ -54,9 +80,9 @@ export default function RestaurantList() {
     setDeleteError("");
     try {
       await deleteRestaurant(deleting.id);
-      setRestaurants((prev) => prev.filter((r) => r.id !== deleting.id));
       setDeleting(null);
       setMessage("");
+      load();
     } catch (err) {
       if (err instanceof ApiError && err.kind === "notfound") handleGone();
       else setDeleteError(err.message);
@@ -77,6 +103,8 @@ export default function RestaurantList() {
         <button className="primary" onClick={() => setFormOpen(true)}>식당 추가</button>
       </div>
 
+      <FilterBar filters={filters} onChange={setFilters} />
+
       {message && <div className="notice warn" role="status">{message}</div>}
 
       {error && (
@@ -88,7 +116,14 @@ export default function RestaurantList() {
 
       {!error && restaurants === null && <p className="notice">불러오는 중…</p>}
 
-      {restaurants && restaurants.length === 0 && (
+      {restaurants && restaurants.length === 0 && hasFilter && (
+        <div className="notice">
+          <p>조건에 맞는 식당이 없습니다</p>
+          <button onClick={clearFilters}>조건 지우기</button>
+        </div>
+      )}
+
+      {restaurants && restaurants.length === 0 && !hasFilter && (
         <div className="notice">
           <p>먼저 식당을 등록해 주세요</p>
           <button className="primary" onClick={() => setFormOpen(true)}>식당 등록</button>

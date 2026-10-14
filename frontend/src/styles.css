@@ -37,3 +37,6 @@ button.danger { background: #c92a2a; border-color: #c92a2a; color: #fff; }
 button.danger-outline { border-color: #c92a2a; color: #c92a2a; }
 .notice.warn { border-color: #e67700; color: #a65400; margin: 12px 0; padding: 12px; }
 .confirm-message { margin: 0 0 16px; overflow-wrap: anywhere; }
+.filter-bar { margin: 12px 0; }
+.filter-bar .search { display: block; margin-bottom: 12px; font-size: 0.9rem; }
+.filter-bar .search input { display: block; width: 100%; margin-top: 4px; padding: 8px; font: inherit; border: 1px solid #bbb; border-radius: 6px; }

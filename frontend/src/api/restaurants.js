@@ -38,8 +38,15 @@ async function request(path, options) {
   throw new ApiError("server", SERVER_MSG);
 }
 
-export function fetchRestaurants() {
-  return request("/api/restaurants");
+// 조건: { q, category, price_range, status } (빈 값은 보내지 않는다). 거르는 일은 서버가 한다.
+export function fetchRestaurants(conditions = {}) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(conditions)) {
+    const v = typeof value === "string" ? value.trim() : value;
+    if (v) params.set(key, v);
+  }
+  const query = params.toString();
+  return request(`/api/restaurants${query ? `?${query}` : ""}`);
 }
 
 export function createRestaurant(data) {
