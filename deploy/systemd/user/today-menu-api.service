@@ -1,0 +1,17 @@
+[Unit]
+Description=Today Menu FastAPI application
+After=network.target
+
+[Service]
+Type=simple
+# install-wsl.sh 가 HEAD 코드를 복사해 두는 실행용 폴더
+WorkingDirectory=%h/today-menu-app
+# DB 접속 정보는 프로젝트 폴더의 .env 를 그대로 읽는다 (복사하지 않는다)
+EnvironmentFile=%h/vibe-lab/today-menu/.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/today-menu-app/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8004
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
