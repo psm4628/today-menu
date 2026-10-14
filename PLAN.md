@@ -79,8 +79,10 @@ DB 접속 정보
 4. 2단계: MVP 완성
 PRD의 P0 기능 F1~F5를 모두 완성한다. 이 단계가 끝나면 서비스를 처음부터 끝까지 시연할 수 있어야 한다.
 작업 목록
-[ ] 백엔드: GET /api/restaurants/{id}, PUT /api/restaurants/{id}, DELETE /api/restaurants/{id}를 만든다. 없는 식당은 404를 돌려준다.
-[ ] 백엔드: 목록 조회에 category, price_range, status, q(검색어) 조건을 붙인다.
+[x] 백엔드: GET /api/restaurants/{id}, PUT /api/restaurants/{id}, DELETE /api/restaurants/{id}를 만든다. 없는 식당은 404를 돌려준다.
+    확인(2026-10-14, 127.0.0.1:8005, 8004 서비스는 그대로 둠): 1건 조회 200 / 없는 id 404 {"detail":"식당을 찾을 수 없습니다"} / 수정 200(이름 앞뒤 공백 제거, 미입력 선택 항목은 null로 갱신) / 이름 비움 422 / 없는 id 수정·삭제 404 / 삭제 204 후 재조회 404 / 확인용 행 삭제, 샘플 10곳 유지
+[x] 백엔드: 목록 조회에 category, price_range, status, q(검색어) 조건을 붙인다.
+    확인: category=한식 2곳, price_range=1 3곳, status=VISITED 4곳, q=샘플 10곳·q=김밥 1곳(이름 부분 일치) / 조합 category=분식&price_range=1 2곳, category=분식&status=VISITED&q=김밥 1곳, price_range=2&status=WANT&q=샘플 4곳, 결과 없는 조합 0곳 / 조건 없음 10곳 / q의 %는 글자로 검색(와일드카드 아님) / price_range=4, status=X는 422
 [ ] 백엔드: GET /api/recommend를 만든다. 조건에 맞는 식당 중 무작위로 하나를 고르고, exclude_id로 직전 결과를 제외한다. 후보가 없으면 404와 안내 메시지를 돌려준다.
 [ ] 프론트엔드: 식당 수정 창과 삭제 확인 창을 만든다.
 [ ] 프론트엔드: 목록 화면에 필터와 검색창을 붙인다.
