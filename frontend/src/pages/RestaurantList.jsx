@@ -4,9 +4,10 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import RestaurantCard from "../components/RestaurantCard.jsx";
 import RestaurantForm from "../components/RestaurantForm.jsx";
+import useTags from "../hooks/useTags.js";
 
 const GONE_MSG = "이미 삭제된 식당입니다";
-const NO_FILTER = { q: "", category: "", price_range: "", status: "" };
+const NO_FILTER = { q: "", category: "", price_range: "", status: "", tag_id: "" };
 const SEARCH_DELAY_MS = 400;
 
 export default function RestaurantList() {
@@ -14,6 +15,7 @@ export default function RestaurantList() {
   const [filters, setFilters] = useState(NO_FILTER); // 화면에 보이는 입력값
   const [searchQ, setSearchQ] = useState(""); // 입력이 멈춘 뒤 서버에 보내는 검색어
   const requestSeq = useRef(0);
+  const { tags, error: tagsError, reload: reloadTags, addTag } = useTags();
   const [error, setError] = useState("");
   const [message, setMessage] = useState(""); // 목록 위 안내 (예: 이미 삭제된 식당)
   const [formOpen, setFormOpen] = useState(false);
@@ -48,7 +50,7 @@ export default function RestaurantList() {
   // 선택을 바꾸면 바로, 검색어는 위 지연이 끝나면 요청한다.
   useEffect(() => {
     load();
-  }, [searchQ, filters.category, filters.price_range, filters.status]);
+  }, [searchQ, filters.category, filters.price_range, filters.status, filters.tag_id]);
 
   function clearFilters() {
     setFilters(NO_FILTER);
@@ -103,7 +105,7 @@ export default function RestaurantList() {
         <button className="primary" onClick={() => setFormOpen(true)}>식당 추가</button>
       </div>
 
-      <FilterBar filters={filters} onChange={setFilters} />
+      <FilterBar filters={filters} onChange={setFilters} tags={tags} tagsError={tagsError} />
 
       {message && <div className="notice warn" role="status">{message}</div>}
 
@@ -141,12 +143,27 @@ export default function RestaurantList() {
         </ul>
       )}
 
-      {formOpen && <RestaurantForm onSaved={handleCreated} onCancel={() => setFormOpen(false)} />}
+      {formOpen && (
+        <RestaurantForm
+          tags={tags}
+          tagsError={tagsError}
+          onTagsReload={reloadTags}
+          onTagAdded={addTag}
+          onSaved={handleCreated}
+          onChanged={load}
+          onCancel={() => setFormOpen(false)}
+        />
+      )}
 
       {editing && (
         <RestaurantForm
           restaurant={editing}
+          tags={tags}
+          tagsError={tagsError}
+          onTagsReload={reloadTags}
+          onTagAdded={addTag}
           onSaved={handleUpdated}
+          onChanged={load}
           onCancel={() => setEditing(null)}
           onGone={handleGone}
         />

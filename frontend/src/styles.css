@@ -40,3 +40,13 @@ button.danger-outline { border-color: #c92a2a; color: #c92a2a; }
 .filter-bar { margin: 12px 0; }
 .filter-bar .search { display: block; margin-bottom: 12px; font-size: 0.9rem; }
 .filter-bar .search input { display: block; width: 100%; margin-top: 4px; padding: 8px; font: inherit; border: 1px solid #bbb; border-radius: 6px; }
+.badge.tag { background: #e3f0ff; color: #1c5d99; }
+.tag-picker { margin: 0 0 12px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; }
+.tag-picker legend { font-size: 0.9rem; padding: 0 4px; }
+.tag-checks { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+.dialog .tag-check { display: inline-flex; align-items: center; gap: 4px; margin: 0; }
+.dialog .tag-check input { display: inline; width: auto; margin: 0; }
+.tag-add { display: flex; gap: 8px; }
+.dialog .tag-add input { margin-top: 0; }
+.tag-error { color: #c92a2a; font-size: 0.85rem; margin: 4px 0 8px; }
+.tag-error button { padding: 2px 8px; font-size: 0.8rem; }

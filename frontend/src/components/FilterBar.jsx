@@ -10,7 +10,7 @@ const STATUSES = [
 ];
 
 // 검색어(q)는 입력 즉시 바뀌고, 요청 시점(0.4초 뒤)은 목록 화면이 정한다.
-export default function FilterBar({ filters, onChange }) {
+export default function FilterBar({ filters, onChange, tags, tagsError }) {
   const set = (key) => (e) => onChange({ ...filters, [key]: e.target.value });
 
   const select = (key, label, options) => (
@@ -37,7 +37,9 @@ export default function FilterBar({ filters, onChange }) {
         {select("category", "종류", CATEGORIES)}
         {select("price_range", "가격대", PRICES)}
         {select("status", "방문 상태", STATUSES)}
+        {select("tag_id", "태그", tags.map((t) => ({ value: String(t.id), label: t.name })))}
       </div>
+      {tagsError && <p className="tag-error">{tagsError}</p>}
     </div>
   );
 }

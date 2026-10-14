@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { fetchRecommendation, fetchRestaurants } from "../api/restaurants.js";
 import RestaurantCard from "../components/RestaurantCard.jsx";
+import useTags from "../hooks/useTags.js";
 
 const CATEGORIES = ["한식", "중식", "일식", "양식", "분식", "카페", "기타"];
 const PRICES = [
@@ -15,12 +16,13 @@ const STATUSES = [
 const NO_MATCH_MSG = "조건에 맞는 식당이 없습니다. 조건을 바꿔 보세요";
 
 export default function Home({ onGoToList }) {
-  const [conditions, setConditions] = useState({ category: "", price_range: "", status: "" });
+  const [conditions, setConditions] = useState({ category: "", price_range: "", status: "", tag_id: "" });
   const [result, setResult] = useState(null);
   // null | "nomatch"(조건에 맞는 식당 없음) | "empty"(등록된 식당 없음) | "error"
   const [problem, setProblem] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const { tags, error: tagsError } = useTags();
 
   // 조건을 바꾸면 직전 결과와 제외 정보(result.id)를 함께 지운다.
   const change = (key) => (e) => {
@@ -76,7 +78,9 @@ export default function Home({ onGoToList }) {
         {select("category", "종류", CATEGORIES)}
         {select("price_range", "가격대", PRICES)}
         {select("status", "방문 상태", STATUSES)}
+        {select("tag_id", "태그", tags.map((t) => ({ value: String(t.id), label: t.name })))}
       </div>
+      {tagsError && <p className="tag-error">{tagsError}</p>}
       <button className="primary pick" onClick={() => pick(null)} disabled={loading}>
         {loading && !result ? "뽑는 중…" : "뽑기"}
       </button>
