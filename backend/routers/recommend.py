@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.schemas import RestaurantOut
+from backend.services.tags import attach_tags
 
 router = APIRouter(prefix="/api/recommend", tags=["recommend"])
 
@@ -17,6 +18,7 @@ def recommend(
     category: Optional[str] = Query(default=None, max_length=20),
     price_range: Optional[int] = Query(default=None, ge=1, le=3),
     status: Optional[Literal["WANT", "VISITED"]] = None,
+    tag_id: Optional[int] = None,
     exclude_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
@@ -31,6 +33,9 @@ def recommend(
     if status:
         conditions.append("status = :status")
         params["status"] = status
+    if tag_id is not None:
+        conditions.append("id IN (SELECT restaurant_id FROM restaurant_tags WHERE tag_id = :tag_id)")
+        params["tag_id"] = tag_id
 
     def pick(extra: list[str], extra_params: dict):
         where = f" WHERE {' AND '.join(conditions + extra)}" if conditions or extra else ""
@@ -45,4 +50,4 @@ def recommend(
         row = pick([], {})
     if row is None:
         raise HTTPException(status_code=404, detail="조건에 맞는 식당이 없습니다")
-    return dict(row)
+    return attach_tags(db, [dict(row)])[0]

@@ -28,6 +28,29 @@ class RestaurantCreate(BaseModel):
         return v or None
 
 
+class TagCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def name_not_blank(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("태그 이름을 입력해 주세요")
+        if len(v) > 30:
+            raise ValueError("태그 이름은 30자 이하로 입력해 주세요")
+        return v
+
+
+class TagOut(BaseModel):
+    id: int
+    name: str
+
+
+class RestaurantTagsIn(BaseModel):
+    tag_ids: list[int]
+
+
 class RestaurantOut(BaseModel):
     id: int
     name: str
@@ -39,3 +62,4 @@ class RestaurantOut(BaseModel):
     status: str
     owner_id: int
     created_at: Optional[datetime] = None
+    tags: list[TagOut] = []

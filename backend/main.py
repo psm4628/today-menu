@@ -3,11 +3,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import InterfaceError, OperationalError
 
 from backend.db import DBConfigError
-from backend.routers import recommend, restaurants
+from backend.routers import recommend, restaurants, tags
 
 app = FastAPI(title="오늘 뭐 먹지?")
 app.include_router(restaurants.router)
 app.include_router(recommend.router)
+app.include_router(tags.router)
 
 
 @app.exception_handler(OperationalError)
