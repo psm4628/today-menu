@@ -52,8 +52,10 @@ today-menu/
 작업 목록
 [ ] 서버에 Nginx, FastAPI 실행 환경, MariaDB를 설치하고 각각 실행되는지 확인한다.
 [ ] restaurants 테이블을 만든다(PRD 7장). 샘플 식당 10곳을 넣는다.
-[ ] 백엔드: GET /api/health, GET /api/restaurants, POST /api/restaurants를 만든다.
-[ ] 백엔드: DB 접속 정보를 .env에서 읽고, 입력 검증은 Pydantic으로 처리한다.
+[x] 백엔드: GET /api/health, GET /api/restaurants, POST /api/restaurants를 만든다.
+    확인(2026-10-14, 127.0.0.1:8004): health 200 {"status":"ok"} / 목록 200, 10곳 / 정상 등록 201 / 이름 없음·공백만·price_range 4 → 422 / 확인용 등록 행(id 11)은 삭제, 샘플 10곳 유지
+[x] 백엔드: DB 접속 정보를 .env에서 읽고, 입력 검증은 Pydantic으로 처리한다.
+    확인: DB_PORT를 잘못 지정해 실행하면 목록 API가 503 {"detail":"DB에 연결할 수 없습니다"}, health는 200 (내부 오류 내용 미노출)
 [ ] Nginx: /는 React 빌드 파일, /api/는 127.0.0.1:8000으로 전달하도록 설정한다.
 [ ] FastAPI를 systemd 서비스로 등록해 서버를 켜면 자동으로 시작되게 한다.
 [ ] 프론트엔드: 목록 화면과 식당 등록 창을 만들고 API에 연결한다.
