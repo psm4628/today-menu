@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef } from "react";
-import { SPIN_MS, finalAngle } from "../utils/roulette.js";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import { SPIN_MS, finalAngle, isFlipped } from "../utils/roulette.js";
 
 const COLORS = ["#ffd8a8", "#d0ebff", "#d8f5a2", "#ffdeeb", "#e5dbff", "#c5f6fa", "#fff3bf", "#ffc9c9"];
 const R = 96;
@@ -21,10 +21,15 @@ export default function Roulette({ slots, winnerIndex, spinKey, onDone }) {
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
 
+  // 칸 안에서 멈추는 위치는 가운데에서 조금 흩뜨린다 (칸 경계에는 걸리지 않게 ±0.3).
+  // 최종 각도를 미리 정해 두어야, 멈췄을 때 읽히는 방향으로 글씨를 놓을 수 있다.
+  const angle = useMemo(
+    () => finalAngle(winnerIndex, slots.length, 5, (Math.random() - 0.5) * 0.6),
+    [spinKey],
+  );
+
   useLayoutEffect(() => {
     const el = wheelRef.current;
-    // 칸 안에서 멈추는 위치는 가운데에서 조금 흩뜨린다 (칸 경계에는 걸리지 않게 ±0.3).
-    const angle = finalAngle(winnerIndex, slots.length, 5, (Math.random() - 0.5) * 0.6);
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
     el.style.transition = "none";
@@ -56,6 +61,7 @@ export default function Roulette({ slots, winnerIndex, spinKey, onDone }) {
             const [x1, y1] = point(start, R);
             const [x2, y2] = point(start + slice, R);
             const fill = COLORS[i % COLORS.length];
+            const flip = isFlipped(i, n, angle); // 멈췄을 때 왼쪽 절반에 오는 칸은 글씨를 뒤집는다
             return (
               <g key={r.id}>
                 {n === 1 ? (
@@ -70,10 +76,11 @@ export default function Roulette({ slots, winnerIndex, spinKey, onDone }) {
                 )}
                 {/* 식당 이름은 SVG text 로만 넣는다 (React 가 이스케이프) */}
                 <text
-                  transform={`rotate(${mid - 90})`}
-                  x={R - 8}
-                  y={3}
-                  textAnchor="end"
+                  transform={`rotate(${mid - 90 + (flip ? 180 : 0)})`}
+                  x={flip ? -(R - 8) : R - 8}
+                  y={0}
+                  dominantBaseline="central"
+                  textAnchor={flip ? "start" : "end"}
                   fontSize="9"
                   fill="#333"
                 >

@@ -34,3 +34,11 @@ export function slotUnderPointer(angle, n) {
   const at = ((-angle % 360) + 360) % 360;
   return Math.floor(at / slice) % n;
 }
+
+// 칸 글씨(중심에서 바깥으로 놓인 글씨)를 뒤집을지 정한다.
+// 룰렛이 angle 만큼 돌아 멈췄을 때 칸 index 의 화면상 위치가 왼쪽 절반(180~360도)이면
+// 글씨가 거꾸로 서므로 180도 돌려 안쪽 방향으로 읽히게 한다.
+export function isFlipped(index, n, angle) {
+  const screen = (((index + 0.5) * (360 / n) + angle) % 360 + 360) % 360;
+  return Math.sin((screen * Math.PI) / 180) < 0;
+}
