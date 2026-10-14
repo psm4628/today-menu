@@ -1,0 +1,25 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, "Noto Sans KR", sans-serif; background: #f6f6f3; color: #222; }
+.app { max-width: 720px; margin: 0 auto; padding: 16px; }
+header h1 { margin: 0 0 16px; font-size: 1.5rem; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.toolbar h2 { font-size: 1.15rem; margin: 0; }
+button { font: inherit; padding: 8px 14px; border: 1px solid #bbb; border-radius: 6px; background: #fff; cursor: pointer; }
+button.primary { background: #d9480f; border-color: #d9480f; color: #fff; }
+button:disabled { opacity: 0.6; cursor: default; }
+.cards { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.card { background: #fff; border: 1px solid #e2e2dc; border-radius: 8px; padding: 12px 14px; }
+.card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.card p { margin: 4px 0; overflow-wrap: anywhere; }
+.card .memo { color: #555; white-space: pre-wrap; }
+.badge { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 10px; background: #ffe8d9; font-size: 0.85rem; }
+.notice { margin: 24px 0; padding: 20px; text-align: center; background: #fff; border: 1px dashed #bbb; border-radius: 8px; }
+.notice.error { border-color: #c92a2a; color: #c92a2a; }
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dialog { background: #fff; border-radius: 10px; padding: 20px; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; }
+.dialog h2 { margin: 0 0 12px; font-size: 1.15rem; }
+.dialog label { display: block; margin-bottom: 12px; font-size: 0.9rem; }
+.dialog input, .dialog select, .dialog textarea { display: block; width: 100%; margin-top: 4px; padding: 8px; font: inherit; border: 1px solid #bbb; border-radius: 6px; }
+.required { color: #c92a2a; }
+.field-error, .form-error { display: block; margin-top: 4px; color: #c92a2a; font-size: 0.85rem; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; }

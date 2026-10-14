@@ -1,0 +1,17 @@
+const PRICE_LABEL = { 1: "저렴", 2: "보통", 3: "비쌈" };
+
+// 사용자 입력은 JSX 텍스트로만 출력한다 (React 가 이스케이프).
+export default function RestaurantCard({ restaurant }) {
+  const { name, category, price_range, location, memo } = restaurant;
+  return (
+    <li className="card">
+      <h3>{name}</h3>
+      <p className="meta">
+        {category && <span className="badge">{category}</span>}
+        {price_range && <span className="badge">{PRICE_LABEL[price_range]}</span>}
+      </p>
+      {location && <p>📍 {location}</p>}
+      {memo && <p className="memo">{memo}</p>}
+    </li>
+  );
+}
