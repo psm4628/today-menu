@@ -18,7 +18,7 @@ async function request(path, options) {
   } catch {
     throw new ApiError("server", SERVER_MSG);
   }
-  if (res.ok) return res.json();
+  if (res.ok) return res.status === 204 ? null : res.json();
 
   if (res.status === 422) {
     const body = await res.json().catch(() => ({}));
@@ -59,4 +59,16 @@ export function fetchRecommendation(conditions, excludeId) {
   if (excludeId) params.set("exclude_id", String(excludeId));
   const query = params.toString();
   return request(`/api/recommend${query ? `?${query}` : ""}`);
+}
+
+export function updateRestaurant(id, data) {
+  return request(`/api/restaurants/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteRestaurant(id) {
+  return request(`/api/restaurants/${id}`, { method: "DELETE" });
 }

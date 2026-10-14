@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ApiError, createRestaurant } from "../api/restaurants.js";
+import { ApiError, createRestaurant, updateRestaurant } from "../api/restaurants.js";
 
 const CATEGORIES = ["한식", "중식", "일식", "양식", "분식", "카페", "기타"];
 const PRICES = [
@@ -9,8 +9,21 @@ const PRICES = [
 ];
 const EMPTY = { name: "", category: "", price_range: "", location: "", memo: "" };
 
-export default function RestaurantForm({ onSaved, onCancel }) {
-  const [form, setForm] = useState(EMPTY);
+// restaurant 를 넘기면 수정 창(현재 값이 채워진 상태), 없으면 등록 창이다.
+// 수정 중 404(이미 삭제됨)가 나오면 onGone 을 호출한다.
+export default function RestaurantForm({ restaurant, onSaved, onCancel, onGone }) {
+  const editing = Boolean(restaurant);
+  const [form, setForm] = useState(
+    editing
+      ? {
+          name: restaurant.name,
+          category: restaurant.category ?? "",
+          price_range: restaurant.price_range ? String(restaurant.price_range) : "",
+          location: restaurant.location ?? "",
+          memo: restaurant.memo ?? "",
+        }
+      : EMPTY,
+  );
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -23,16 +36,20 @@ export default function RestaurantForm({ onSaved, onCancel }) {
     setFormError("");
     setSaving(true);
     try {
-      const saved = await createRestaurant({
+      const data = {
         name: form.name,
         category: form.category || null,
         price_range: form.price_range ? Number(form.price_range) : null,
         location: form.location || null,
         memo: form.memo || null,
-      });
+      };
+      const saved = editing ? await updateRestaurant(restaurant.id, data) : await createRestaurant(data);
       onSaved(saved);
     } catch (err) {
-      if (err instanceof ApiError && err.kind === "validation") {
+      if (editing && err instanceof ApiError && err.kind === "notfound") {
+        onGone();
+        return;
+      } else if (err instanceof ApiError && err.kind === "validation") {
         setFieldErrors(err.fieldErrors);
         if (Object.keys(err.fieldErrors).length === 0) setFormError(err.message);
       } else {
@@ -46,9 +63,9 @@ export default function RestaurantForm({ onSaved, onCancel }) {
   const err = (key) => fieldErrors[key] && <span className="field-error">{fieldErrors[key]}</span>;
 
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="식당 등록">
+    <div className="overlay" role="dialog" aria-modal="true" aria-label={editing ? "식당 수정" : "식당 등록"}>
       <form className="dialog" onSubmit={submit} noValidate>
-        <h2>식당 등록</h2>
+        <h2>{editing ? "식당 수정" : "식당 등록"}</h2>
 
         <label>
           이름 <b className="required">*</b>
@@ -60,7 +77,7 @@ export default function RestaurantForm({ onSaved, onCancel }) {
           종류
           <select value={form.category} onChange={set("category")}>
             <option value="">선택 안 함</option>
-            {CATEGORIES.map((c) => (
+            {(form.category && !CATEGORIES.includes(form.category) ? [form.category, ...CATEGORIES] : CATEGORIES).map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>

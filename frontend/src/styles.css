@@ -31,3 +31,9 @@ section h2 { font-size: 1.15rem; margin: 0 0 12px; }
 .conditions label { font-size: 0.9rem; }
 .conditions select { display: block; width: 100%; margin-top: 4px; padding: 8px; font: inherit; border: 1px solid #bbb; border-radius: 6px; }
 button.pick { width: 100%; padding: 12px; font-size: 1.05rem; }
+.card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.card-actions button { padding: 4px 12px; font-size: 0.9rem; }
+button.danger { background: #c92a2a; border-color: #c92a2a; color: #fff; }
+button.danger-outline { border-color: #c92a2a; color: #c92a2a; }
+.notice.warn { border-color: #e67700; color: #a65400; margin: 12px 0; padding: 12px; }
+.confirm-message { margin: 0 0 16px; overflow-wrap: anywhere; }
