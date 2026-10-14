@@ -3,7 +3,7 @@
 export class ApiError extends Error {
   constructor(kind, message, fieldErrors = {}) {
     super(message);
-    this.kind = kind; // "validation" | "db" | "server"
+    this.kind = kind; // "validation" | "db" | "notfound" | "server"
     this.fieldErrors = fieldErrors;
   }
 }
@@ -34,6 +34,7 @@ async function request(path, options) {
     throw new ApiError("validation", "입력값을 확인해 주세요", fieldErrors);
   }
   if (res.status === 503) throw new ApiError("db", DB_MSG);
+  if (res.status === 404) throw new ApiError("notfound", "조건에 맞는 식당이 없습니다");
   throw new ApiError("server", SERVER_MSG);
 }
 
@@ -47,4 +48,15 @@ export function createRestaurant(data) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+}
+
+// 조건: { category, price_range, status } (빈 값은 보내지 않는다), excludeId: 직전 결과 id
+export function fetchRecommendation(conditions, excludeId) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(conditions)) {
+    if (value) params.set(key, value);
+  }
+  if (excludeId) params.set("exclude_id", String(excludeId));
+  const query = params.toString();
+  return request(`/api/recommend${query ? `?${query}` : ""}`);
 }

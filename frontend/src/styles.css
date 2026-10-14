@@ -23,3 +23,11 @@ button:disabled { opacity: 0.6; cursor: default; }
 .required { color: #c92a2a; }
 .field-error, .form-error { display: block; margin-top: 4px; color: #c92a2a; font-size: 0.85rem; }
 .actions { display: flex; justify-content: flex-end; gap: 8px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #e2e2dc; }
+.tab { border: none; border-bottom: 3px solid transparent; border-radius: 0; background: none; margin-bottom: -2px; }
+.tab.active { border-bottom-color: #d9480f; font-weight: 700; }
+section h2 { font-size: 1.15rem; margin: 0 0 12px; }
+.conditions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.conditions label { font-size: 0.9rem; }
+.conditions select { display: block; width: 100%; margin-top: 4px; padding: 8px; font: inherit; border: 1px solid #bbb; border-radius: 6px; }
+button.pick { width: 100%; padding: 12px; font-size: 1.05rem; }
