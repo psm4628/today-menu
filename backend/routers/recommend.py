@@ -4,11 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.auth import get_current_user, reject_owner_param
 from backend.db import get_db
 from backend.schemas import RestaurantOut
 from backend.services.tags import attach_tags
 
-router = APIRouter(prefix="/api/recommend", tags=["recommend"])
+# 로그인 필수. 후보는 로그인한 사용자의 식당만이다.
+router = APIRouter(
+    prefix="/api/recommend",
+    tags=["recommend"],
+    dependencies=[Depends(get_current_user), Depends(reject_owner_param)],
+)
 
 COLUMNS = "id, name, category, price_range, location, memo, is_favorite, status, owner_id, created_at"
 
@@ -22,9 +28,10 @@ def recommend(
     favorite: Optional[bool] = None,
     exclude_id: Optional[int] = None,
     db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
 ):
-    conditions = []
-    params: dict = {}
+    conditions = ["owner_id = :owner"]
+    params: dict = {"owner": user["id"]}
     if category:
         conditions.append("category = :category")
         params["category"] = category

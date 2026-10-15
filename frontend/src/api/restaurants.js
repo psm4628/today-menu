@@ -3,7 +3,7 @@
 export class ApiError extends Error {
   constructor(kind, message, fieldErrors = {}) {
     super(message);
-    this.kind = kind; // "validation" | "db" | "notfound" | "conflict" | "server"
+    this.kind = kind; // "validation" | "db" | "notfound" | "conflict" | "unauthorized" | "toomany" | "server"
     this.fieldErrors = fieldErrors;
   }
 }
@@ -11,7 +11,18 @@ export class ApiError extends Error {
 const SERVER_MSG = "요청을 처리하지 못했습니다";
 const DB_MSG = "DB에 연결할 수 없습니다";
 
-async function request(path, options) {
+// 로그인이 필요한 요청이 401 이면(세션 만료 등) 앱이 로그인 화면으로 돌아가도록 알린다. 인증 요청(/api/auth/)은 제외.
+let unauthorizedHandler = null;
+export function setUnauthorizedHandler(fn) {
+  unauthorizedHandler = fn;
+}
+
+async function detailOf(res, fallback) {
+  const body = await res.json().catch(() => null);
+  return typeof body?.detail === "string" ? body.detail : fallback;
+}
+
+export async function request(path, options) {
   let res;
   try {
     res = await fetch(path, options);
@@ -33,9 +44,15 @@ async function request(path, options) {
     }
     throw new ApiError("validation", "입력값을 확인해 주세요", fieldErrors);
   }
+  if (res.status === 401) {
+    const message = await detailOf(res, "로그인이 필요합니다");
+    if (!path.startsWith("/api/auth/")) unauthorizedHandler?.();
+    throw new ApiError("unauthorized", message);
+  }
+  if (res.status === 429) throw new ApiError("toomany", await detailOf(res, "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요"));
   if (res.status === 503) throw new ApiError("db", DB_MSG);
   if (res.status === 404) throw new ApiError("notfound", "조건에 맞는 식당이 없습니다");
-  if (res.status === 409) throw new ApiError("conflict", "이미 있는 태그입니다");
+  if (res.status === 409) throw new ApiError("conflict", await detailOf(res, "이미 있는 태그입니다"));
   throw new ApiError("server", SERVER_MSG);
 }
 

@@ -1,15 +1,21 @@
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import InterfaceError, OperationalError
 
+from backend import auth
 from backend.db import DBConfigError
 from backend.routers import recommend, restaurants, tags, visits
 
 app = FastAPI(title="오늘 뭐 먹지?")
+app.include_router(auth.router)
 app.include_router(restaurants.router)
 app.include_router(recommend.router)
 app.include_router(tags.router)
 app.include_router(visits.router)
+
+
+app.add_exception_handler(RequestValidationError, auth.auth_validation_error_handler)
 
 
 @app.exception_handler(OperationalError)

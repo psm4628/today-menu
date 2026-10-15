@@ -2,10 +2,12 @@ import re
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, StrictBool, StrictInt, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, field_validator
 
 
 class RestaurantCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")  # owner_id 등 알 수 없는 필드는 422 (소유자는 서버가 정한다)
+
     name: str = Field(max_length=100)
     category: Optional[str] = Field(default=None, max_length=20)
     price_range: Optional[int] = Field(default=None, ge=1, le=3)
